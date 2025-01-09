@@ -1,6 +1,6 @@
-import { useEffect, useCallback, useState } from 'react';
-import { io, Socket } from 'socket.io-client';
-import {useAuth} from './useAuth.tsx';
+import { useEffect, useCallback, useState } from "react";
+import { io, Socket } from "socket.io-client";
+import { useAuth } from "./useAuth.tsx";
 
 interface ChatMessage {
   content: string;
@@ -9,65 +9,61 @@ interface ChatMessage {
 
 export function useSocket(reportId: string) {
   const [socket, setSocket] = useState<Socket | null>(null);
-  const [initialMessageSent, setInitialMessageSent] = useState<boolean>(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [report, setReport] = useState<string>('');
-  const [lastUserMessage, setLastUserMessage] = useState<string>('');
+  const [report, setReport] = useState<string>("");
 
   const { user } = useAuth();
 
   useEffect(() => {
-    console.log('Connecting to socket', user.token);
-    const socketInstance = io('http://localhost:3000', {
+    console.log("Connecting to socket", user.token);
+    const socketInstance = io("http://localhost:3000", {
       query: { reportId },
       extraHeaders: {
-        Authorization: `Bearer ${user.token}`
-      }
+        Authorization: `Bearer ${user.token}`,
+      },
     });
-
-    if (!initialMessageSent) {
-      setInitialMessageSent(true);
-      socketInstance.emit('start');
-    }
-    setReport('');
-
     setSocket(socketInstance);
 
-    socketInstance.on('message', (message: string) => {
-      if (message !== lastUserMessage) {
-        setMessages((prev) => [...prev, { content: message, isUser: false }]);
-      }
-    });
+    socketInstance.emit("start", { reportId });
 
-    let currentAiConversationMessage = '';
-
-    socketInstance.on('conversation', ({ token, isComplete }) => {
-      if (isComplete) {
-        currentAiConversationMessage = '';
+    socketInstance.on("assistant", (token) => {
+      if (token.toString().includes("~~~~")) {
+        setMessages((prev) => [...prev, { content: "", isUser: false }]);
       } else {
-        currentAiConversationMessage += token;
         setMessages((prev) => {
-          const newMessages = [...prev];
-          if (
-            newMessages.length > 0 &&
-            !newMessages[newMessages.length - 1].isUser
-          ) {
-            newMessages[newMessages.length - 1].content =
-              currentAiConversationMessage;
-          } else {
-            newMessages.push({
-              content: currentAiConversationMessage,
-              isUser: false,
-            });
-          }
-          return newMessages;
+          const lastMessage = prev[prev.length - 1];
+          console.log(lastMessage);
+          const updatedMessage = {
+            ...lastMessage,
+            content: lastMessage.content + token,
+          };
+          return [...prev.slice(0, -1), updatedMessage];
         });
       }
     });
 
-    socketInstance.on('report', ({ token, isComplete }) => {
-      if (isComplete) {
-        //
+    socketInstance.on("user", (token) => {
+      console.log(token);
+      if (token.toString().includes("~~~~")) {
+        setMessages((prev) => [...prev, { content: "", isUser: true }]);
+      } else {
+        setMessages((prev) => {
+          const lastMessage = prev[prev.length - 1];
+          if (lastMessage) {
+            const updatedMessage = {
+              ...lastMessage,
+              content: lastMessage.content + token,
+            };
+            return [...prev.slice(0, -1), updatedMessage];
+          }
+          return prev;
+        });
+      }
+    });
+
+    socketInstance.on("report", (token) => {
+      if (token.toString().includes("~~~~")) {
+        setReport("");
       } else {
         setReport((prev) => prev + token);
       }
@@ -76,18 +72,15 @@ export function useSocket(reportId: string) {
     return () => {
       socketInstance.disconnect();
     };
-  }, [lastUserMessage, user]);
+  }, [reportId, user.token]);
 
   const sendMessage = useCallback(
     (message: string) => {
-      if (socket) {
-        setLastUserMessage(message);
-        socket.emit('message', message);
-        setMessages((prev) => [
-          ...prev,
-          { content: message, isUser: true, isReport: false },
-        ]);
-      }
+      if (!socket) return;
+
+      setMessages((prev) => [...prev, { content: message, isUser: true }]);
+
+      socket.emit("message", message);
     },
     [socket]
   );

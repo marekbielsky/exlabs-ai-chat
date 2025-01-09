@@ -2,105 +2,330 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import OpenAI from 'openai';
 import { metrics, sampleReport } from '../data/sample-data';
-import { UsersService } from '../users/users.service';
+import { User, UsersService } from '../users/users.service';
 
-const systemMessage =
-  'You are an experienced startup founder with a deep understanding of the Venture Capital game. Your task is to prepare an investor report about the recent progress of your business. Make sure to use a personal and encouraging writing style. Keep in mind that the goal is to maintain strong relationships with the investor community. Each section should add up to a concise, but compelling and exciting story about your startup. Use the information provided in the user prompt and provided tools to search for the information and to generate the report. First, generate the response to the user. It should be concise, 1-2 sentences, and only summarize how are you helping them. Note this is not supposed to be investor-friendly format. Then, separate sections with `~~~~`. Then return the investor-friendly report in a human-readable format, using markdown. Make sure the text is well-structured, easy to read and detailed. Never ask clarifying questions unless specifically told to. User may ask to refine the report. In this case, again return response to the user, then divide with `~~~~` and regenerate entire report with updates requested by the user. Do not add any text after the report and do not add `~~~~` at the end.';
+export const BOS = '~~~~';
 
-const defaultSystemMessage: OpenAI.Chat.Completions.ChatCompletionMessageParam = { role: 'system', content: systemMessage };
+const systemMessage = `You are an experienced startup founder with a deep understanding of the Venture Capital game. Your task is to mentor a founder in preparing an investor report about the recent progress of your business. The founder will task you with providing a report, make sure to prefer a personal and encouraging writing style. Keep in mind that the goal is to maintain strong relationships with the investor community. Each section of a good report should add up to a concise, but compelling and exciting story about your startup. The report should consist of sections: Overview, Revenue, Costs, Highlights. Use the information provided in the user prompt and provided tools to search for the information and to generate the report. Provide only full report content, even if other sections did not change, and do not add anything beyond the report content.`;
+
+const defaultSystemMessage: OpenAI.Chat.Completions.ChatCompletionMessageParam =
+  { role: 'system', content: systemMessage };
+
+export enum MessageMode {
+  Report = 'report',
+  Assistant = 'assistant',
+  User = 'user',
+}
 
 @Injectable()
 export class ChatService {
   private openai: OpenAI;
-  private messages: {
+  private users: {
     [userId: string]: {
-      [chatId: string]: OpenAI.Chat.Completions.ChatCompletionMessageParam[];
-    }
+      chats: {
+        [chatId: string]: {
+          messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[];
+          report: string;
+          state?: string;
+        };
+      };
+    };
   };
   private readonly logger = new Logger(ChatService.name);
+
+  private conversationScript: {
+    state: string;
+    isAssistantMsgComplete: boolean;
+    updatesReport?: boolean;
+    assistantMsg: string;
+    transitions: string[];
+  }[] = [
+    {
+      state: 'START',
+      isAssistantMsgComplete: true,
+      updatesReport: true,
+      assistantMsg:
+        "Welcome to Connectd AI Update Tool! You can already see the first iteration of your investor report. Let's improve it further.\n\n Do you want to answer my followup question, or directly provide feedback for the report, or move on to the next task?",
+      transitions: ['FOLLOWUP_1', 'FEEDBACK_1', 'END'],
+    },
+    {
+      state: 'FOLLOWUP_1',
+      isAssistantMsgComplete: false,
+      updatesReport: false,
+      assistantMsg:
+        'I will come up with one, specific followup question for you. Please provide an answer. Here is the question: ',
+      transitions: ['FOLLOWUP_2'],
+    },
+    {
+      state: 'FOLLOWUP_2',
+      isAssistantMsgComplete: true,
+      updatesReport: true,
+      assistantMsg:
+        'Thank you for the answer. Do you want to answer more followup questions or provide feedback for some specific section of the report?',
+      transitions: ['FOLLOWUP_1', 'FEEDBACK_1', 'END'],
+    },
+    {
+      state: 'FEEDBACK_1',
+      isAssistantMsgComplete: true,
+      updatesReport: false,
+      assistantMsg:
+        'Which of report sections would you like to provide feedback for?',
+      transitions: ['FEEDBACK_2'],
+    },
+    {
+      state: 'FEEDBACK_2',
+      isAssistantMsgComplete: true,
+      updatesReport: false,
+      assistantMsg: 'What feedback do you have for this section?',
+      transitions: ['FEEDBACK_3'],
+    },
+    {
+      state: 'FEEDBACK_3',
+      isAssistantMsgComplete: true,
+      updatesReport: true,
+      assistantMsg:
+        'Thank you for the feedback. Do you want to provide feedback for more sections or answer followup questions?',
+      transitions: ['FEEDBACK_1', 'FOLLOWUP_1', 'END'],
+    },
+    {
+      state: 'END',
+      isAssistantMsgComplete: true,
+      updatesReport: false,
+      assistantMsg:
+        'Thank you for your time. If you have any more questions or need further assistance, feel free to ask.',
+      transitions: [],
+    },
+  ];
 
   constructor(
     private readonly configService: ConfigService,
     private readonly usersService: UsersService,
   ) {
+    this.logger.log('Initializing ChatService...');
     this.openai = new OpenAI({
       apiKey: this.configService.get<string>('OPENAI_API_KEY'),
     });
-    this.messages = {};
+    this.users = {};
+    this.logger.log('ChatService initialized successfully.');
   }
 
-  async *startConnection(userId: string, chatId: string) {
-    if(!this.messages[userId]) {
-      this.messages[userId] = {};
-    }
-
-    const userMessages = this.messages[userId][chatId];
-    const user = await this.usersService.findOneById(userId);
-
-    if(!userMessages) {
-      this.messages[userId][chatId] = [defaultSystemMessage];
-      const streamResponse = this.generateStreamResponse(
-        userId,
-        chatId,
-        `
-        Below is information about the user in JSON format:
+  private prepareInitialUserMessage(user: User) {
+    const message = `
+        Here's information about me in JSON format:
         ${JSON.stringify(user)}
         
-        Below is company financial data in CSV format:
+        Here are some metrics for my company:
         ${metrics}
         
-        Below is example report. Extract structure from it and replace data and text with user-related data. Do not use any specific data from sample report for final report.
-        ${sampleReport}
-        
-        I want to generate a report for year ${new Date().getFullYear()}.`);
+        I want to generate a report for year ${new Date().getFullYear()}.`;
+    return message;
+  }
 
-      for await (const response of streamResponse) {
-        yield response;
+  private prepareChatHistory(userId: string, chatId: string) {
+    const chat = this.users[userId].chats[chatId];
+
+    return chat.messages.map((message, index) => {
+      if (message.role === 'assistant' && index >= chat.messages.length - 2) {
+        return {
+          ...message,
+          content: [BOS, message.content.toString(), BOS, chat.report].join(
+            ' ',
+          ),
+        };
       }
-    } else {
-      const report = userMessages[userMessages.length - 1].content.toString().split('~~~~')[1];
-      const toDisplay = `Restored session.\n~~~~\n${report}`;
-      for (const word of toDisplay
-        .toString()
-        .split('\n')) {
-        yield `\n${word}`;
-      }
+      return message;
+    });
+  }
+
+  private *fakeTokenize(text: string, includeBOS = false) {
+    if (includeBOS) {
+      yield BOS;
+    }
+    const words = text.split(/(\s+)/);
+    for (const word of words) {
+      yield word;
     }
   }
 
-  async *generateStreamResponse(userId: string, chatId: string, message: string) {
-    if(!this.messages[userId] || !this.messages[userId][chatId]) {
+  async *restoreConversation(userId: string, chatId: string) {
+    if (!this.users[userId]) {
+      this.users[userId] = {
+        chats: {},
+      };
+    }
+
+    const chat = this.users[userId].chats[chatId];
+
+    if (chat) {
+      for (const message of chat.messages.slice(2)) {
+        // skip system and initial user message
+        yield {
+          stream: this.fakeTokenize(
+            message.content.toString(),
+            message.role === 'user',
+          ),
+          mode: message.role as MessageMode,
+        };
+      }
+      yield {
+        stream: this.fakeTokenize(chat.report),
+        mode: MessageMode.Report,
+      };
+    }
+  }
+
+  async *generateInitialResponse(userId: string, chatId: string) {
+    if (!this.users[userId]) {
+      this.users[userId] = {
+        chats: {},
+      };
+    }
+
+    const user = await this.usersService.findOneById(userId);
+    const chat = {
+      messages: [defaultSystemMessage],
+      report: sampleReport,
+      state: null,
+    };
+
+    this.users[userId].chats[chatId] = chat;
+
+    for await (const item of this.generateResponse(
+      userId,
+      chatId,
+      this.prepareInitialUserMessage(user),
+    )) {
+      yield item;
+    }
+  }
+
+  private async determineNextState(
+    userId: string,
+    chatId: string,
+    message: string,
+  ) {
+    const chat = this.users[userId].chats[chatId];
+
+    if (!chat.state) {
+      console.log('No state found, returning START');
+      return 'START';
+    }
+
+    const transitions = this.conversationScript.find(
+      (state) => state.state === chat.state,
+    ).transitions;
+
+    console.log(
+      `Trying to determine next state from: ${transitions} and messages: ${chat.messages[chat.messages.length - 1].content} and ${chat.messages[chat.messages.length - 2].content}`,
+    );
+
+    if (!transitions.length) {
+      return null;
+    } else if (transitions.length === 1) {
+      return transitions[0];
+    }
+
+    const response = await this.openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: `Your role is to determine what option did the user select. The options are: ${transitions} and ERROR which should be used when the user's response does not seem to fall into any of those scripted categories. Following is the last part of the conversation:
+        - ${chat.messages[chat.messages.length - 2].content}
+        - ${chat.messages[chat.messages.length - 1].content}`,
+        },
+        { role: 'assistant', content: 'Selected options is ' },
+      ],
+    });
+
+    const selectedOption = response.choices[0].message.content.trim();
+
+    console.log(`Selected option is: ${selectedOption}`);
+
+    return selectedOption;
+  }
+
+  private async sleep(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  async *generateResponse(userId: string, chatId: string, message: string) {
+    if (!this.users[userId] || !this.users[userId].chats[chatId]) {
       throw new Error('Chat not started');
     }
 
-    const userMessages = this.messages[userId][chatId];
-    userMessages.push({ role: 'user', content: message });
-    this.messages[userId][chatId] = userMessages;
+    const chat = this.users[userId].chats[chatId];
+    chat.messages.push({ role: 'user', content: message });
+    this.users[userId].chats[chatId] = chat;
 
-    const assistantMessage: OpenAI.Chat.Completions.ChatCompletionMessageParam =
-      { role: 'assistant', content: '' };
+    const report = [];
 
     try {
-      const stream = await this.openai.chat.completions.create({
-        messages: userMessages,
-        model: 'gpt-4o-mini',
-        stream: true,
-      });
+      const nextState = await this.determineNextState(userId, chatId, message);
 
-      for await (const chunk of stream) {
-        const content = chunk.choices[0]?.delta?.content;
-        if (content) {
-          assistantMessage.content += content;
-          yield content;
+      if (nextState === 'ERROR') {
+        for await (const token of this.fakeTokenize(
+          'Sorry, I did not understand your response. Please try again.',
+          true,
+        )) {
+          yield { token, mode: MessageMode.Assistant };
+          await this.sleep(5);
+        }
+        return;
+      }
+
+      const { assistantMsg, isAssistantMsgComplete, updatesReport } =
+        this.conversationScript.find((state) => state.state === nextState);
+
+      const assistantMessage: OpenAI.Chat.Completions.ChatCompletionMessageParam =
+        { role: 'assistant', content: `${BOS} ${assistantMsg}` };
+
+      for await (const token of this.fakeTokenize(
+        assistantMessage.content.toString(),
+      )) {
+        yield { token, mode: MessageMode.Assistant };
+        await this.sleep(5);
+      }
+
+      if (updatesReport) {
+        assistantMessage.content += ` ${BOS}`;
+        yield { token: BOS, mode: MessageMode.Report };
+      }
+
+      if (updatesReport || !isAssistantMsgComplete) {
+        const stream = await this.openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [...chat.messages, assistantMessage],
+          stream: true,
+        });
+
+        console.log([...chat.messages, assistantMessage]);
+
+        for await (const chunk of stream) {
+          const token = chunk.choices[0].delta.content;
+
+          if (updatesReport) {
+            report.push(token);
+          }
+
+          assistantMessage.content += token;
+
+          yield {
+            token,
+            mode: updatesReport ? MessageMode.Report : MessageMode.Assistant,
+          };
         }
       }
-      userMessages.push(assistantMessage);
-      this.messages[userId][chatId] = userMessages;
+
+      chat.messages.push(assistantMessage);
+      chat.report = report.join('');
+      chat.state = nextState;
     } catch (error) {
-      this.logger.error('OpenAI API error:', error);
-      yield 'Sorry, I encountered an error processing your request.';
-    } finally {
-      this.logger.log('messages', JSON.stringify(this.messages[userId][chatId]));
+      for await (const token of this.fakeTokenize(
+        'Sorry, I encountered an error trying to process your request.',
+      )) {
+        yield { token, mode: MessageMode.Assistant };
+      }
     }
   }
 }
