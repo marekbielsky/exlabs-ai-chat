@@ -1,0 +1,28 @@
+.avatar-wrapper {
+    height: 40px;
+    width: 40px;
+    border-radius: 100%;
+    position: relative;
+    overflow: hidden;
+    margin-left: 20px;
+}
+
+.avatar {
+    min-width: 40px;
+    height: 40px;
+    background-color: rgb(62, 96, 235);
+    border-radius: 50%;
+    display: inline-flex;
+    -webkit-box-pack: center;
+    justify-content: center;
+    -webkit-box-align: center;
+    align-items: center;
+}
+
+.avatar::before {
+    content: attr(data-after-content);
+    color: rgb(255, 255, 255);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: calc(28px);
+}

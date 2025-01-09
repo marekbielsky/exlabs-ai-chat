@@ -1,11 +1,10 @@
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
+  font-family: Montserrat, sans-serif;
+  line-height: 1.57;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  color: rgb(7, 15, 37);
+  background-color: rgb(248, 248, 251);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -20,19 +19,6 @@ a {
 }
 a:hover {
   color: #535bf2;
-}
-
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
 }
 
 button {
@@ -54,48 +40,6 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
-}
-
-#root {
-  max-width: 1680px;
-  height: 100vh;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  margin-bottom: 20px;
-}
-
-.header img.logo {
-  height: 50px;
-  width: auto;
-  object-fit: contain;
-  padding: 4px;
-  filter: brightness(0) invert(1);
-}
-
-.header h1 {
-  color: white;
-  margin: 0;
-  font-size: 28px;
-}
 
 button {
   padding: 12px 24px;
@@ -113,4 +57,44 @@ button:hover {
 
 button a {
   color: white;
+}
+
+body {
+  margin: 0;
+}
+
+html {
+  box-sizing: border-box;
+}
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+
+.main-container {
+  max-width: 1686px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 40px 80px;
+  display: flex;
+}
+
+.page-title {
+  color: rgb(16, 50, 142);
+  font-size: 30px;
+  line-height: 45px;
+  font-weight: 700;
+  white-space: normal;
+}
+
+.title {
+  font-weight: 700;
+  font-size: 20px;
+  color: rgb(7, 15, 37);
+}
+
+.description {
+  font-size: 16px;
+  color: rgb(97, 106, 113);
+  font-weight: 300;
+  line-height: 25px;
 }

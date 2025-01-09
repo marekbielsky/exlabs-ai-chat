@@ -13,10 +13,9 @@ createRoot(document.getElementById('root')!).render(
   <BrowserRouter>
     <AuthProvider>
       <Routes>
+        <Route path="login" element={<Login />} />
         <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />
-          <Route path="login" element={<Login />} />
-
           <Route path="chat" element={<ProtectedLayout />}>
             <Route index element={<Start />} />
             <Route path=":chatId" element={<Chat />} />
