@@ -12,6 +12,9 @@ function Header() {
     navLinks = (
       <ul className="nav-links">
         <li className="menu-item">
+          <Link to="chat" className="nav-link">Updates</Link>
+        </li>
+        <li className="menu-item">
           <Link to="#" className="nav-link">Connections</Link>
         </li>
         <li className="menu-item">
