@@ -1,57 +1,89 @@
-import { useEffect, useCallback, useState } from 'react';
-import { io, Socket } from 'socket.io-client';
+import { useEffect, useCallback, useState } from "react";
+import { io, Socket } from "socket.io-client";
+import { useAuth } from "./useAuth.tsx";
 
 interface ChatMessage {
   content: string;
   isUser: boolean;
 }
 
-export function useSocket() {
+export function useSocket(reportId: string, startDate: string | null, endDate: string | null) {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [lastUserMessage, setLastUserMessage] = useState<string>('');
+  const [report, setReport] = useState<string>("");
+
+  const { user } = useAuth();
 
   useEffect(() => {
-    const socketInstance = io('http://localhost:3000');
+    console.log("Connecting to socket", user.token);
+    const socketInstance = io("http://localhost:3000", {
+      query: { reportId, startDate, endDate },
+      extraHeaders: {
+        Authorization: `Bearer ${user.token}`,
+      },
+    });
     setSocket(socketInstance);
 
-    socketInstance.on('message', (message: string) => {
-      if (message !== lastUserMessage) {
-        setMessages((prev) => [...prev, { content: message, isUser: false }]);
+    socketInstance.emit("start", { reportId });
+
+    socketInstance.on("assistant", (token) => {
+      if (token.toString().includes("~~~~")) {
+        setMessages((prev) => [...prev, { content: "", isUser: false }]);
+      } else {
+        setMessages((prev) => {
+          const lastMessage = prev[prev.length - 1];
+          console.log(lastMessage);
+          const updatedMessage = {
+            ...lastMessage,
+            content: lastMessage.content + token,
+          };
+          return [...prev.slice(0, -1), updatedMessage];
+        });
       }
     });
 
-    let currentAiMessage = '';
-    
-    socketInstance.on('token', ({ token, isComplete }) => {
-      if (isComplete) {
-        currentAiMessage = '';
+    socketInstance.on("user", (token) => {
+      console.log(token);
+      if (token.toString().includes("~~~~")) {
+        setMessages((prev) => [...prev, { content: "", isUser: true }]);
       } else {
-        currentAiMessage += token;
         setMessages((prev) => {
-          const newMessages = [...prev];
-          if (newMessages.length > 0 && !newMessages[newMessages.length - 1].isUser) {
-            newMessages[newMessages.length - 1].content = currentAiMessage;
-          } else {
-            newMessages.push({ content: currentAiMessage, isUser: false });
+          const lastMessage = prev[prev.length - 1];
+          if (lastMessage) {
+            const updatedMessage = {
+              ...lastMessage,
+              content: lastMessage.content + token,
+            };
+            return [...prev.slice(0, -1), updatedMessage];
           }
-          return newMessages;
+          return prev;
         });
+      }
+    });
+
+    socketInstance.on("report", (token) => {
+      if (token.toString().includes("~~~~")) {
+        setReport("");
+      } else {
+        setReport((prev) => prev + token);
       }
     });
 
     return () => {
       socketInstance.disconnect();
     };
-  }, [lastUserMessage]);
+  }, [reportId, user.token]);
 
-  const sendMessage = useCallback((message: string) => {
-    if (socket) {
-      setLastUserMessage(message);
-      socket.emit('message', message);
+  const sendMessage = useCallback(
+    (message: string) => {
+      if (!socket) return;
+
       setMessages((prev) => [...prev, { content: message, isUser: true }]);
-    }
-  }, [socket]);
 
-  return { messages, sendMessage };
-} 
+      socket.emit("message", message);
+    },
+    [socket]
+  );
+
+  return { messages, sendMessage, report };
+}

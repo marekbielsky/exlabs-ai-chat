@@ -1,0 +1,46 @@
+.chat-update-wrapper {
+    display: flex;
+    gap: 16px
+}
+
+.chat-update-icon {
+    height: 75px;
+    min-width: 75px;
+    background: linear-gradient(270deg, #AF1077 10.78%, #6C2B7B 97.42%);
+    border-radius: 6px;
+    display: flex;
+    color: white;
+    justify-content: center;
+    align-items: center;
+    font-size: 30px;
+    font-weight: 700;
+}
+
+.chat-update-content {
+    display: flex;
+    flex-direction: column;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 140%;
+    justify-content: center;
+}
+
+.chat-update-footer-description {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.chat-update-footer-text {
+    width: 125px;
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 20px;
+}
+
+.chat-update-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+}

@@ -1,10 +1,21 @@
 import { useState } from 'react';
-import { useSocket } from './hooks/useSocket';
-import './App.css';
+import { useSocket } from '../../hooks/useSocket.ts';
+import markdownit from 'markdown-it';
+import parse from 'html-react-parser';
+import './Chat.css';
+import {useParams, useSearchParams} from 'react-router';
 
-function App() {
+function Chat() {
+  const { chatId} = useParams();
+  const [searchParams] = useSearchParams();
+
+  const md = markdownit({breaks: true});
   const [newMessage, setNewMessage] = useState('');
-  const { messages, sendMessage } = useSocket();
+  const { messages, sendMessage, report } = useSocket(
+    chatId,
+    searchParams.get('start'),
+    searchParams.get('end')
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -15,17 +26,13 @@ function App() {
   };
 
   return (
-    <>
-      <div className="header">
-        <img src="/exlabs_logo.svg" alt="Exlabs Logo" className="logo" />
-        <h1>Exlabs AI Chat</h1>
-      </div>
+    <div className="wrapper" id={chatId}>
       <div className="chat-container">
         <div className="messages">
           {messages.map((msg, index) => (
             <div key={index} className="message-container">
               {!msg.isUser && (
-                <img src="/openai-2.svg" alt="AI Logo" className="message-logo" />
+                <img src="/logo-square.svg" alt="Connectd Logo" className="message-logo" />
               )}
               <div
                 className={`message ${msg.isUser ? 'user-message' : 'ai-message'}`}
@@ -33,7 +40,7 @@ function App() {
                 {msg.content}
               </div>
               {msg.isUser && (
-                <img src="/exlabs_logo.svg" alt="Exlabs Logo" className="message-logo" />
+                <img src="/person-fill.svg" alt="Company Logo" className="message-logo" />
               )}
             </div>
           ))}
@@ -48,8 +55,15 @@ function App() {
           <button type="submit">Send</button>
         </form>
       </div>
-    </>
+      <div className="report-container">
+        <div className="report-scroller">
+          <div className="report-content">
+            {report === '' ? 'Your report will appear here...' : parse(md.render(report))}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
-export default App;
+export default Chat;
