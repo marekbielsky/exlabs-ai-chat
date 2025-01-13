@@ -64,11 +64,11 @@ function Header() {
   return (
     <nav className="nav-container">
       <div className="nav-content">
-        <a className="desktop-logo-href" href="https://app.dev.connectdpreview.com">
+        <Link to='/' className="desktop-logo-href" >
           <img className="nav-logo-desktop-img"
                src="/logo.svg"
                alt="logo"/>
-        </a>
+        </Link>
         {navLinks}
       </div>
     </nav>

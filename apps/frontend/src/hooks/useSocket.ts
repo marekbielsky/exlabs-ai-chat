@@ -7,7 +7,7 @@ interface ChatMessage {
   isUser: boolean;
 }
 
-export function useSocket(reportId: string) {
+export function useSocket(reportId: string, startDate: string | null, endDate: string | null) {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [report, setReport] = useState<string>("");
@@ -17,7 +17,7 @@ export function useSocket(reportId: string) {
   useEffect(() => {
     console.log("Connecting to socket", user.token);
     const socketInstance = io("http://localhost:3000", {
-      query: { reportId },
+      query: { reportId, startDate, endDate },
       extraHeaders: {
         Authorization: `Bearer ${user.token}`,
       },

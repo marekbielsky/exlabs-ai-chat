@@ -121,11 +121,12 @@ html {
 }
 
 .drawer-content-wrapper {
-  right: 0;
+  right: -625px;
   height: 100%;
   position: absolute;
   width: 625px;
   display: block;
+  transition: width 1s ease, top 1s ease;
 }
 
 .drawer-content {

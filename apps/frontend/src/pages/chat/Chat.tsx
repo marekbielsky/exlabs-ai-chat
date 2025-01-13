@@ -3,14 +3,19 @@ import { useSocket } from '../../hooks/useSocket.ts';
 import markdownit from 'markdown-it';
 import parse from 'html-react-parser';
 import './Chat.css';
-import {useParams} from 'react-router';
+import {useParams, useSearchParams} from 'react-router';
 
 function Chat() {
   const { chatId} = useParams();
+  const [searchParams] = useSearchParams();
 
   const md = markdownit({breaks: true});
   const [newMessage, setNewMessage] = useState('');
-  const { messages, sendMessage, report } = useSocket(chatId);
+  const { messages, sendMessage, report } = useSocket(
+    chatId,
+    searchParams.get('start'),
+    searchParams.get('end')
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

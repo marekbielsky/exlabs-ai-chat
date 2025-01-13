@@ -6,7 +6,7 @@ import { User, UsersService } from '../users/users.service';
 
 export const BOS = '~~~~';
 
-const systemMessage = `You are an experienced startup founder with a deep understanding of the Venture Capital game. Your task is to mentor a founder in preparing an investor report about the recent progress of your business. The founder will task you with providing a report, make sure to prefer a personal and encouraging writing style. Keep in mind that the goal is to maintain strong relationships with the investor community. Each section of a good report should add up to a concise, but compelling and exciting story about your startup. The report should consist of sections: Overview, Revenue, Costs, Highlights. Use the information provided in the user prompt and provided tools to search for the information and to generate the report. Provide only full report content, even if other sections did not change, and do not add anything beyond the report content.`;
+const systemMessage = `You are an experienced startup founder with a deep understanding of the Venture Capital game. Your task is to mentor a founder in preparing an investor report about the recent progress of your business. The founder will task you with providing a report, make sure to prefer a personal and encouraging writing style. Keep in mind that the goal is to maintain strong relationships with the investor community. Each section of a good report should add up to a concise, but compelling and exciting story about your startup. The report should consist of sections: Overview, Revenue, Costs, Highlights. Use the information provided in the user prompt and provided tools to search for the information and to generate the report. Provide only full report content, even if other sections did not change, and do not add anything beyond the report content. Display covered dates at the beginning of the report in YYYY-MM-DD format.`;
 
 const defaultSystemMessage: OpenAI.Chat.Completions.ChatCompletionMessageParam =
   { role: 'system', content: systemMessage };
@@ -17,17 +17,21 @@ export enum MessageMode {
   User = 'user',
 }
 
+interface SavedChat {
+  messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[];
+  report: string;
+  state?: string;
+  startDate: Date;
+  endDate: Date;
+}
+
 @Injectable()
 export class ChatService {
   private openai: OpenAI;
   private users: {
     [userId: string]: {
       chats: {
-        [chatId: string]: {
-          messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[];
-          report: string;
-          state?: string;
-        };
+        [chatId: string]: SavedChat;
       };
     };
   };
@@ -109,16 +113,15 @@ export class ChatService {
     this.logger.log('ChatService initialized successfully.');
   }
 
-  private prepareInitialUserMessage(user: User) {
-    const message = `
+  private prepareInitialUserMessage(user: User, startDate: Date, endDate: Date) {
+    return `
         Here's information about me in JSON format:
         ${JSON.stringify(user)}
         
         Here are some metrics for my company:
         ${metrics}
         
-        I want to generate a report for year ${new Date().getFullYear()}.`;
-    return message;
+        I want to generate a report covering time between ${startDate.toDateString()} and ${endDate.toDateString()}.`;
   }
 
   private prepareChatHistory(userId: string, chatId: string) {
@@ -174,7 +177,12 @@ export class ChatService {
     }
   }
 
-  async *generateInitialResponse(userId: string, chatId: string) {
+  async *generateInitialResponse(
+    userId: string,
+    chatId: string,
+    startDate: Date,
+    endDate: Date
+  ) {
     if (!this.users[userId]) {
       this.users[userId] = {
         chats: {},
@@ -182,10 +190,12 @@ export class ChatService {
     }
 
     const user = await this.usersService.findOneById(userId);
-    const chat = {
+    const chat: SavedChat = {
       messages: [defaultSystemMessage],
       report: sampleReport,
       state: null,
+      startDate,
+      endDate,
     };
 
     this.users[userId].chats[chatId] = chat;
@@ -193,7 +203,7 @@ export class ChatService {
     for await (const item of this.generateResponse(
       userId,
       chatId,
-      this.prepareInitialUserMessage(user),
+      this.prepareInitialUserMessage(user, startDate, endDate),
     )) {
       yield item;
     }

@@ -17,6 +17,8 @@ import { Logger } from '@nestjs/common';
 interface SocketWithUserData extends Socket {
   user: User;
   chatId: string;
+  startDate: Date;
+  endDate: Date;
 }
 
 @WebSocketGateway({
@@ -88,6 +90,8 @@ export class ChatGateway implements OnGatewayConnection {
       } of this.chatService.generateInitialResponse(
         socket.user.id,
         socket.chatId,
+        socket.startDate,
+        socket.endDate,
       )) {
         this.processToken(token, mode);
       }
@@ -124,6 +128,8 @@ export class ChatGateway implements OnGatewayConnection {
 
       socket.user = user;
       socket.chatId = chatId;
+      socket.startDate = new Date((socket.handshake.query.startDate ?? '2024-01-01') as string);
+      socket.endDate = new Date((socket.handshake.query.endDate ?? '2024-12-31') as string);
       this.logger.log('Connection established:', { user, chatId });
     } catch (e) {
       console.error('Error during connection:', e);
