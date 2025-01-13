@@ -4,41 +4,123 @@ module.exports = {
     es2021: true,
     node: true,
   },
-  extends: [
-    'eslint:recommended',
-    'plugin:react/recommended',
-    'plugin:@typescript-eslint/recommended',
-  ],
+  extends: ['eslint:recommended', 'plugin:react/recommended', 'plugin:@typescript-eslint/recommended', 'prettier'],
   parser: '@typescript-eslint/parser',
   parserOptions: {
-    ecmaFeatures: {
-      jsx: true,
-    },
+    ecmaFeatures: { jsx: true },
     ecmaVersion: 12,
     sourceType: 'module',
   },
-  plugins: [
-    'react',
-    '@typescript-eslint',
-  ],
+  plugins: ['react', '@typescript-eslint', 'prettier'],
   rules: {
-    'indent': ['error', 2], // Enforce 2-space indentation
-    'linebreak-style': ['error', 'unix'], // Enforce Unix linebreaks
-    'quotes': ['error', 'single'], // Enforce single quotes
-    'semi': ['error', 'always'], // Enforce semicolons
+    indent: ['error', 2],
+    'linebreak-style': ['error', 'unix'],
+    quotes: [
+      'error',
+      'single',
+      {
+        avoidEscape: true,
+        allowTemplateLiterals: true,
+      },
+    ],
+    '@typescript-eslint/quotes': [
+      'error',
+      'single',
+      {
+        avoidEscape: true,
+        allowTemplateLiterals: true,
+      },
+    ],
+    semi: ['error', 'always'],
+    'comma-dangle': ['error', 'always-multiline'],
+    'max-len': [
+      'error',
+      {
+        code: 120,
+        tabWidth: 2,
+        ignoreComments: true,
+        ignoreTrailingComments: true,
+        ignoreUrls: true,
+        ignoreStrings: true,
+        ignoreTemplateLiterals: true,
+        ignoreRegExpLiterals: true,
+      },
+    ],
+    'no-trailing-spaces': 'error',
+    'object-curly-newline': [
+      'error',
+      {
+        ObjectExpression: { multiline: true, minProperties: 3 },
+        ObjectPattern: { multiline: true },
+        ImportDeclaration: { multiline: true, minProperties: 4 },
+        ExportDeclaration: { multiline: true, minProperties: 3 },
+      },
+    ],
+    'object-property-newline': ['error', { allowAllPropertiesOnSameLine: true }],
+    'object-curly-spacing': ['error', 'always'],
+    'array-bracket-spacing': ['error', 'never'],
+    'computed-property-spacing': ['error', 'never'],
+    'keyword-spacing': ['error', { before: true, after: true }],
+    'space-before-blocks': ['error', 'always'],
+    'space-before-function-paren': [
+      'error',
+      {
+        anonymous: 'always',
+        named: 'never',
+        asyncArrow: 'always',
+      },
+    ],
+    'space-in-parens': ['error', 'never'],
+    'space-infix-ops': 'error',
     'no-unused-vars': 'off',
-    '@typescript-eslint/no-unused-vars': 'off',
-    'no-console': 'warn', // Warn on console usage
-    'eqeqeq': ['error', 'always'], // Enforce strict equality
-    'curly': 'error', // Enforce consistent brace style for all control statements
-    'react/prop-types': 'off', // Disable prop-types as we use TypeScript
-    '@typescript-eslint/no-explicit-any': 'warn', // Warn on usage of the `any` type
+    '@typescript-eslint/no-unused-vars': [
+      'warn',
+      {
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+      },
+    ],
+    'no-console': 'off',
+    eqeqeq: ['error', 'always'],
+    curly: ['error', 'all'],
+    'brace-style': ['error', '1tbs', { allowSingleLine: false }],
+    'no-multiple-empty-lines': ['error', { max: 1, maxEOF: 0 }],
+    'padding-line-between-statements': [
+      'error',
+      {
+        blankLine: 'always',
+        prev: '*',
+        next: 'return',
+      },
+      {
+        blankLine: 'always',
+        prev: ['const', 'let', 'var'],
+        next: '*',
+      },
+      {
+        blankLine: 'any',
+        prev: ['const', 'let', 'var'],
+        next: ['const', 'let', 'var'],
+      },
+    ],
+    'react/prop-types': 'off',
     'react/react-in-jsx-scope': 'off',
+    'react/jsx-curly-spacing': ['error', { when: 'never' }],
+    'react/jsx-indent': ['error', 2],
+    'react/jsx-indent-props': ['error', 2],
+    'react/jsx-max-props-per-line': ['error', { maximum: 1, when: 'multiline' }],
+    '@typescript-eslint/no-explicit-any': 'warn',
+    '@typescript-eslint/explicit-function-return-type': 'off',
+    '@typescript-eslint/explicit-module-boundary-types': 'off',
+    '@typescript-eslint/type-annotation-spacing': [
+      'error',
+      {
+        before: false,
+        after: true,
+        overrides: { arrow: { before: true, after: true } },
+      },
+    ],
   },
-  settings: {
-    react: {
-      version: 'detect',
-    },
-  },
-  ignorePatterns: ["**/dist/**/*.ts"],
+  settings: { react: { version: 'detect' } },
+  ignorePatterns: ['**/dist/**/*.ts'],
 };
