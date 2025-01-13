@@ -6,7 +6,22 @@ import { User, UsersService } from '../users/users.service';
 
 export const BOS = '~~~~';
 
-const systemMessage = `You are an experienced startup founder with a deep understanding of the Venture Capital game. Your task is to mentor a founder in preparing an investor report about the recent progress of your business. The founder will task you with providing a report, make sure to prefer a personal and encouraging writing style. Keep in mind that the goal is to maintain strong relationships with the investor community. Each section of a good report should add up to a concise, but compelling and exciting story about your startup. The report should consist of sections: Overview, Revenue, Costs, Highlights. Use the information provided in the user prompt and provided tools to search for the information and to generate the report. Provide only full report content, even if other sections did not change, and do not add anything beyond the report content. Display covered dates at the beginning of the report in YYYY-MM-DD format.`;
+const systemMessage = `You are an experienced startup founder with a deep understanding of the Venture Capital game. Your task is to mentor a founder in preparing an investor report about the recent progress of your business.
+
+IMPORTANT: You MUST follow this EXACT template structure for your report:
+${sampleReport}
+
+Instructions:
+1. Use the EXACT same markdown formatting, sections, and emojis
+2. Only update numerical values based on the provided metrics data
+3. Keep all qualitative content (descriptions, team updates, etc.) exactly as shown
+4. Maintain all table structures and column headers
+5. Do not add or remove any sections
+6. Keep the same greeting and closing format
+
+The founder will provide metrics data. Use this data ONLY to update the numerical values in the corresponding sections while keeping everything else identical to the template.
+
+Provide only the report content, and do not add anything beyond the report content.`;
 
 const defaultSystemMessage: OpenAI.Chat.Completions.ChatCompletionMessageParam =
   { role: 'system', content: systemMessage };
@@ -136,6 +151,7 @@ export class ChatService {
           ),
         };
       }
+
       return message;
     });
   }
@@ -145,6 +161,7 @@ export class ChatService {
       yield BOS;
     }
     const words = text.split(/(\s+)/);
+
     for (const word of words) {
       yield word;
     }
@@ -152,9 +169,7 @@ export class ChatService {
 
   async *restoreConversation(userId: string, chatId: string) {
     if (!this.users[userId]) {
-      this.users[userId] = {
-        chats: {},
-      };
+      this.users[userId] = { chats: {} };
     }
 
     const chat = this.users[userId].chats[chatId];
@@ -184,9 +199,7 @@ export class ChatService {
     endDate: Date
   ) {
     if (!this.users[userId]) {
-      this.users[userId] = {
-        chats: {},
-      };
+      this.users[userId] = { chats: {} };
     }
 
     const user = await this.usersService.findOneById(userId);
@@ -218,6 +231,7 @@ export class ChatService {
 
     if (!chat.state) {
       console.log('No state found, returning START');
+
       return 'START';
     }
 
@@ -240,9 +254,12 @@ export class ChatService {
       messages: [
         {
           role: 'system',
-          content: `Your role is to determine what option did the user select. The options are: ${transitions} and ERROR which should be used when the user's response does not seem to fall into any of those scripted categories. Following is the last part of the conversation:
-        - ${chat.messages[chat.messages.length - 2].content}
-        - ${chat.messages[chat.messages.length - 1].content}`,
+          content:
+            `Your role is to determine what option did the user select. The options are: ${transitions} and ERROR ` +
+            "which should be used when the user's response does not seem to fall into any of those scripted categories. " +
+            'Following is the last part of the conversation:\n' +
+            `- ${chat.messages[chat.messages.length - 2].content}\n` +
+            `- ${chat.messages[chat.messages.length - 1].content}`,
         },
         { role: 'assistant', content: 'Selected options is ' },
       ],
@@ -265,6 +282,7 @@ export class ChatService {
     }
 
     const chat = this.users[userId].chats[chatId];
+
     chat.messages.push({ role: 'user', content: message });
     this.users[userId].chats[chatId] = chat;
 
@@ -281,6 +299,7 @@ export class ChatService {
           yield { token, mode: MessageMode.Assistant };
           await this.sleep(5);
         }
+
         return;
       }
 
