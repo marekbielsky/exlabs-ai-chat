@@ -8,7 +8,7 @@ export const BOS = '~~~~';
 
 const systemMessage = `You are an experienced startup founder with a deep understanding of the Venture Capital game. Your task is to mentor a founder in preparing an investor report about the recent progress of your business.
 
-IMPORTANT: You MUST follow this EXACT template structure for your report:
+IMPORTANT: You MUST follow this EXACT template structure for your report, but DO NOT include the template itself in your response:
 ${sampleReport}
 
 Instructions:
@@ -18,8 +18,7 @@ Instructions:
 4. Maintain all table structures and column headers
 5. Do not add or remove any sections
 6. Keep the same greeting and closing format
-
-The founder will provide metrics data. Use this data ONLY to update the numerical values in the corresponding sections while keeping everything else identical to the template.
+7. Do not include the template in your response
 
 Provide only the report content, and do not add anything beyond the report content.`;
 
@@ -128,7 +127,11 @@ export class ChatService {
     this.logger.log('ChatService initialized successfully.');
   }
 
-  private prepareInitialUserMessage(user: User, startDate: Date, endDate: Date) {
+  private prepareInitialUserMessage(
+    user: User,
+    startDate: Date,
+    endDate: Date,
+  ) {
     return `
         Here's information about me in JSON format:
         ${JSON.stringify(user)}
@@ -196,7 +199,7 @@ export class ChatService {
     userId: string,
     chatId: string,
     startDate: Date,
-    endDate: Date
+    endDate: Date,
   ) {
     if (!this.users[userId]) {
       this.users[userId] = { chats: {} };
