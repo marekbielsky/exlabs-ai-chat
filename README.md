@@ -30,6 +30,7 @@ A real-time chat application with OpenAI integration, built with React, NestJS, 
    - Create a `.env` file in `apps/backend`:
      ```plaintext
      OPENAI_API_KEY=your_openai_api_key_here
+     JWT_SECRET=secret
      ```
 
 4. **Start development servers**:
