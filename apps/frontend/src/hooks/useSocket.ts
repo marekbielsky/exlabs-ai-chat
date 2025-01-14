@@ -27,12 +27,12 @@ export function useSocket(reportId: string, startDate: string | null, endDate: s
     socketInstance.emit("start", { reportId });
 
     socketInstance.on("assistant", (token) => {
+      console.log(token);
       if (token.toString().includes("~~~~")) {
         setMessages((prev) => [...prev, { content: "", isUser: false }]);
       } else {
         setMessages((prev) => {
           const lastMessage = prev[prev.length - 1];
-          console.log(lastMessage);
           const updatedMessage = {
             ...lastMessage,
             content: lastMessage.content + token,
@@ -43,7 +43,6 @@ export function useSocket(reportId: string, startDate: string | null, endDate: s
     });
 
     socketInstance.on("user", (token) => {
-      console.log(token);
       if (token.toString().includes("~~~~")) {
         setMessages((prev) => [...prev, { content: "", isUser: true }]);
       } else {

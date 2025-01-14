@@ -331,16 +331,14 @@ export class ChatService {
           stream: true,
         });
 
-        console.log([...chat.messages, assistantMessage]);
-
         for await (const chunk of stream) {
           const token = chunk.choices[0].delta.content;
 
           if (updatesReport) {
             report.push(token);
+          } else {
+            assistantMessage.content += token;
           }
-
-          assistantMessage.content += token;
 
           yield {
             token,
