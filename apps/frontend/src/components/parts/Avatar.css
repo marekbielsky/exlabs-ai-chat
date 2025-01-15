@@ -17,6 +17,31 @@
     justify-content: center;
     -webkit-box-align: center;
     align-items: center;
+    font-size: 28px;
+}
+
+.avatar-wrapper.big {
+    height: 84px;
+    width: 84px;
+    margin-left: 0;
+}
+
+.avatar-wrapper.small {
+    height: 24px;
+    width: 24px;
+    margin-left: 0;
+}
+
+.avatar-wrapper.big .avatar {
+    height: 84px;
+    min-width: 84px;
+    font-size: 60px;
+}
+
+.avatar-wrapper.small .avatar {
+    height: 24px;
+    min-width: 24px;
+    font-size: 16px;
 }
 
 .avatar::before {
@@ -24,5 +49,4 @@
     color: rgb(255, 255, 255);
     font-weight: 600;
     text-transform: uppercase;
-    font-size: calc(28px);
 }
