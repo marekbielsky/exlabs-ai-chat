@@ -16,38 +16,21 @@ export const responseSchema = z.object({
         "The title of the report, e.g., 'Swerve Investor Report - September 2024 🚀'",
       ),
       currentlyHighlightedSection: nullableString.describe(
-        "The currently highlighted section of the report, e.g., 'financialHealth', or null if empty.",
+        "The currently highlighted section of the report, e.g., 'revenue', or null if empty.",
       ),
       sections: z
         .object({
-          overview: nullableString.describe(
-            "Opening salutation to the shareholders, overview and brief summary of the company's performance.",
-          ),
-          financialHealth: z
+          summary: z
             .object({
-              description: nullableString.describe(
-                'Commentary on financial health.',
+              highlights: nullableString.describe(
+                "What's gone well and key announcements",
               ),
-              table: tableSchema,
+              learnings: nullableString.describe(
+                'Positive reflections on challenges and learnings',
+              ),
             })
             .nullable(),
-          liquidityMetrics: z
-            .object({
-              description: nullableString.describe(
-                'Commentary on liquidity metrics.',
-              ),
-              table: tableSchema,
-            })
-            .nullable(),
-          customerMetrics: z
-            .object({
-              description: nullableString.describe(
-                'Commentary on customer metrics.',
-              ),
-              table: tableSchema,
-            })
-            .nullable(),
-          revenueMetrics: z
+          revenue: z
             .object({
               description: nullableString.describe(
                 'Commentary on revenue metrics.',
@@ -55,25 +38,59 @@ export const responseSchema = z.object({
               table: tableSchema,
             })
             .nullable(),
-          burnMetrics: z
+          customer: z
             .object({
               description: nullableString.describe(
-                'Commentary on burn metrics.',
+                'Commentary on customer growth.',
               ),
               table: tableSchema,
             })
             .nullable(),
-          transactionMetrics: z
+          churn: z
             .object({
               description: nullableString.describe(
-                'Commentary on transaction metrics.',
+                'Commentary on churn metrics.',
+              ),
+              table: tableSchema,
+            })
+            .nullable(),
+          profitAndBurn: z
+            .object({
+              description: nullableString.describe(
+                'Commentary on profit and burn metrics.',
+              ),
+              table: tableSchema,
+            })
+            .nullable(),
+          pipeline: z
+            .object({
+              description: nullableString.describe(
+                'Commentary on pipeline metrics.',
+              ),
+              table: tableSchema,
+            })
+            .nullable(),
+          productDevelopment: z
+            .object({
+              developments: nullableString.describe(
+                'Recent product developments and achievements.',
+              ),
+              usageStats: nullableString.describe('Key usage statistics.'),
+              specificMetrics: nullableString.describe(
+                'Manual input product metrics.',
+              ),
+            })
+            .nullable(),
+          unitEconomics: z
+            .object({
+              description: nullableString.describe(
+                'Commentary on unit economics.',
               ),
               table: tableSchema,
             })
             .nullable(),
         })
         .nullable(),
-      closing: nullableString.describe('Closing remarks of the report.'),
       signature: z
         .object({
           name: nullableString.describe('Name of the signer.'),
