@@ -7,9 +7,8 @@ import './Chat.css';
 
 const sectionsMapping = {
   overview: null,
-  summary: 'Summary',
   revenue: 'Revenue',
-  customer: 'Customer Growth',
+  customer: 'Customer',
   churn: 'Churn',
   profitAndBurn: 'Profit & Burn',
   pipeline: 'Pipeline',

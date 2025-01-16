@@ -54,7 +54,7 @@ const sectionsSchema = z
     customer: sectionWithTableSchema('Commentary on customer growth.'),
     churn: sectionWithTableSchema('Commentary on churn metrics.'),
     profitAndBurn: sectionWithTableSchema(
-      'Commentary on profit and burn metrics.',
+      'Commentary on profit, burn, working capital, and runway metrics.',
     ),
     pipeline: sectionWithTableSchema('Commentary on pipeline metrics.'),
     productDevelopment: productDevelopmentSchema,
