@@ -1,18 +1,20 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useParams, useSearchParams } from 'react-router';
+import Avatar from '../../components/parts/Avatar.tsx';
+import { useAuth } from '../../hooks/useAuth.tsx';
 import { useSocket } from '../../hooks/useSocket.ts';
 import './Chat.css';
-import { useParams, useSearchParams } from 'react-router';
-import { useAuth } from '../../hooks/useAuth.tsx';
-import Avatar from '../../components/parts/Avatar.tsx';
 
 const sectionsMapping = {
   overview: null,
-  financialHealth: 'Financial Health',
-  liquidityMetrics: 'Liquidity Metrics',
-  customerMetrics: 'Customer Metrics',
-  revenueMetrics: 'Revenue Metrics',
-  burnMetrics: 'Burn Metrics',
-  transactionMetrics: 'Transaction Metrics',
+  summary: 'Summary',
+  revenue: 'Revenue',
+  customer: 'Customer Growth',
+  churn: 'Churn',
+  profitAndBurn: 'Profit & Burn',
+  pipeline: 'Pipeline',
+  productDevelopment: 'Product Development',
+  unitEconomics: 'Unit Economics',
 };
 
 function Chat() {
@@ -41,8 +43,8 @@ function Chat() {
 
   useEffect(() => {
     const handleBeforeUnload = (event) => {
-        event.preventDefault();
-        event.returnValue = '';
+      event.preventDefault();
+      event.returnValue = '';
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => {
