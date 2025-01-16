@@ -7,7 +7,7 @@ import {
   OnGatewayConnection,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { ChatService, MessageMode } from './chat.service';
+import { ChatService } from './chat.service';
 import { User, UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -44,58 +44,31 @@ export class ChatGateway implements OnGatewayConnection {
     @ConnectedSocket() socket: SocketWithUserData,
     @MessageBody() message: string,
   ): Promise<void> {
-    this.logger.log('handleMessage invoked:', {
-      userId: socket.user.id,
-      chatId: socket.chatId,
-      message,
-    });
-    this.server.emit('message', message);
-
-    let prevMode = null;
-
-    for await (const { token, mode } of this.chatService.generateResponse(
-      socket.user.id,
+    socket.emit('message', '<|startoftext|>');
+    for await (const completion of this.chatService.handleMessage(
+      socket.user,
       socket.chatId,
       message,
     )) {
-      // this.logger.log('Generated response token:', { token, mode });
-      this.processToken(token, mode);
-      prevMode = mode;
+      socket.emit('message', completion);
     }
+    socket.emit('message', '<|endoftext|>');
   }
 
   @SubscribeMessage('start')
   async handleStart(
     @ConnectedSocket() socket: SocketWithUserData,
   ): Promise<void> {
-    this.logger.log('handleStart invoked:', {
-      userId: socket.user.id,
-      chatId: socket.chatId,
-    });
-    this.logger.log('Restoring conversation:', socket.chatId);
-    let countRestoredMessages = 0;
-    for await (const { stream, mode } of this.chatService.restoreConversation(
-      socket.user.id,
+    socket.emit('message', '<|startoftext|>');
+    for await (const completion of this.chatService.handleStart(
+      socket.user,
       socket.chatId,
+      socket.startDate,
+      socket.endDate,
     )) {
-      await this.processStream(stream, mode);
-      countRestoredMessages++;
+      socket.emit('message', completion);
     }
-
-    if (countRestoredMessages == 0) {
-      this.logger.log('No messages restored, generating initial response');
-      for await (const {
-        token,
-        mode,
-      } of this.chatService.generateInitialResponse(
-        socket.user.id,
-        socket.chatId,
-        socket.startDate,
-        socket.endDate,
-      )) {
-        this.processToken(token, mode);
-      }
-    }
+    socket.emit('message', '<|endoftext|>');
   }
 
   async handleConnection(@ConnectedSocket() socket: SocketWithUserData) {
@@ -115,10 +88,10 @@ export class ChatGateway implements OnGatewayConnection {
       }
 
       const payload = await this.jwtService.verifyAsync<JwtTokenPayload>(token);
-      this.logger.log('JWT payload verified:', payload);
+      this.logger.log(`Token verified: ${payload.name}`);
 
       const user = await this.usersService.findOneByName(payload.name);
-      this.logger.log('User fetched from database:', user);
+      this.logger.log(`User found: ${user.businessName} (${user.id})`);
 
       if (!user) {
         throw new Error('User does not exist');
@@ -128,26 +101,18 @@ export class ChatGateway implements OnGatewayConnection {
 
       socket.user = user;
       socket.chatId = chatId;
-      socket.startDate = new Date((socket.handshake.query.startDate ?? '2024-01-01') as string);
-      socket.endDate = new Date((socket.handshake.query.endDate ?? '2024-12-31') as string);
-      this.logger.log('Connection established:', { user, chatId });
+      socket.startDate = new Date(
+        (socket.handshake.query.startDate ?? '2024-01-01') as string,
+      );
+      socket.endDate = new Date(
+        (socket.handshake.query.endDate ?? '2024-12-31') as string,
+      );
+      this.logger.log(
+        `Connection established: ${user.businessName} (${user.id}) -> Chat ID: ${chatId}`,
+      );
     } catch (e) {
       console.error('Error during connection:', e);
       socket.disconnect();
     }
-  }
-
-  private async processStream(
-    tokenStream: Iterable<string>,
-    mode: MessageMode,
-  ): Promise<void> {
-    this.logger.log('Processing token stream:', { mode });
-    for await (const token of tokenStream) {
-      this.processToken(token, mode);
-    }
-  }
-
-  private async processToken(token: string, mode: MessageMode): Promise<void> {
-    this.server.emit(mode, token);
   }
 }

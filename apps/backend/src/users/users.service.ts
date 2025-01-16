@@ -4,6 +4,7 @@ import { users as rawUsers } from '../data/users';
 // This should be a real class/interface representing a user entity
 export type User = {
   businessName: string;
+  name: string;
   id: string;
 };
 
@@ -11,6 +12,7 @@ export type User = {
 export class UsersService {
   private readonly users = rawUsers.map((user) => ({
     businessName: user.business_name,
+    name: user.founder_first_name + ' ' + user.founder_last_name,
     id: user.id,
   }));
 
