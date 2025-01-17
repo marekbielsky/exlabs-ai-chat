@@ -1,5 +1,4 @@
-import {Report} from "../../../hooks/useSocket.ts";
-
+import { Report } from '../../../hooks/useSocket.ts';
 
 interface SectionViewProps {
   sections: Required<Report>['sections'];
@@ -8,13 +7,14 @@ interface SectionViewProps {
 }
 
 const sectionsMapping = {
-  overview: null,
-  financialHealth: 'Financial Health',
-  liquidityMetrics: 'Liquidity Metrics',
-  customerMetrics: 'Customer Metrics',
-  revenueMetrics: 'Revenue Metrics',
-  burnMetrics: 'Burn Metrics',
-  transactionMetrics: 'Transaction Metrics',
+  summary: null,
+  revenue: 'Revenue',
+  customer: 'Customer',
+  churn: 'Churn',
+  profitAndBurn: 'Profit & Burn',
+  pipeline: 'Pipeline',
+  productDevelopment: 'Product Development',
+  unitEconomics: 'Unit Economics',
 };
 
 const SectionsView = ({ sections, highlightedRef, currentlyHighlightedSection }: SectionViewProps) => {
@@ -31,10 +31,6 @@ const SectionsView = ({ sections, highlightedRef, currentlyHighlightedSection }:
     }
 
     return (
-
-
-
-
       <div
         key={sectionKey}
         className="report-section"
@@ -48,20 +44,20 @@ const SectionsView = ({ sections, highlightedRef, currentlyHighlightedSection }:
         {table && (
           <table>
             <thead>
-            <tr>
-              {(table.headers ?? []).map((header, index) => (
-                <th key={index}>{header}</th>
-              ))}
-            </tr>
-            </thead>
-            <tbody>
-            {(table.rows ?? []).map((row, rowIndex) => (
-              <tr key={rowIndex}>
-                {(row ?? []).map((cell, cellIndex) => (
-                  <td key={cellIndex}>{cell}</td>
+              <tr>
+                {(table.headers ?? []).map((header, index) => (
+                  <th key={index}>{header}</th>
                 ))}
               </tr>
-            ))}
+            </thead>
+            <tbody>
+              {(table.rows ?? []).map((row, rowIndex) => (
+                <tr key={rowIndex}>
+                  {(row ?? []).map((cell, cellIndex) => (
+                    <td key={cellIndex}>{cell}</td>
+                  ))}
+                </tr>
+              ))}
             </tbody>
           </table>
         )}
@@ -72,11 +68,9 @@ const SectionsView = ({ sections, highlightedRef, currentlyHighlightedSection }:
   return (
     <>
       {sections.overview && renderReportSection('overview', sections.overview)}
-      {Object.entries(sections ?? {}).map(
-        ([key, content]) => key !== 'overview' && renderReportSection(key, content)
-      )}
+      {Object.entries(sections ?? {}).map(([key, content]) => key !== 'overview' && renderReportSection(key, content))}
     </>
-  )
-}
+  );
+};
 
 export default SectionsView;

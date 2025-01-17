@@ -1,11 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import OpenAI from 'openai';
-import { User, UsersService } from '../users/users.service';
+import { zodResponseFormat } from 'openai/helpers/zod';
 import { metrics } from 'src/data/sample-data';
 import { systemPrompt } from 'src/data/system-prompt';
 import { responseSchema } from '../data/response-schema';
-import { zodResponseFormat } from 'openai/helpers/zod';
+import { User, UsersService } from '../users/users.service';
 
 interface ChatHistory {
   messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[];
