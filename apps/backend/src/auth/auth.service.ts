@@ -17,12 +17,16 @@ export class AuthService {
 
   async signIn(name: string): Promise<SignInResponse> {
     const user = await this.usersService.findOneByName(name);
+
     if (!user) {
       throw new UnauthorizedException();
     }
     const payload: JwtTokenPayload = { sub: user.id, name: user.businessName };
-    return {
-      access_token: await this.jwtService.signAsync(payload),
-    };
+
+    return { access_token: await this.jwtService.signAsync(payload) };
+  }
+
+  async getCompanies(): Promise<string[]> {
+    return this.usersService.getCompanies();
   }
 }

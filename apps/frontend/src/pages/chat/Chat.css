@@ -73,12 +73,11 @@ input {
 .report-container {
   flex: 1;
   border: 1px solid #ccc;
-  margin-top: 10px;
   border-radius: 5px;
 }
 
 .report-scroller {
-  height: calc(100% - 100px);
+  height: 100%;
   overflow-y: auto;
 }
 
@@ -87,7 +86,7 @@ input {
   padding: 20px;
   border-radius: 4px;
   background-color: white;
-  min-height: 100%;
+  height: calc(80vh - 100px);
 }
 
 table {
@@ -264,12 +263,19 @@ tr:hover {
     margin-right: 8px;
 }
 
-
-.chat-container button:disabled,
-.chat-container input:disabled {
-  opacity: 0.6;
+.final-report {
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin: 0 100px;
 }
 
-.chat-container button:disabled:hover {
-  cursor: not-allowed;
+.final-report-content {
+    padding: 0 24px;
+}
+
+.chat-footer {
+    margin-top: 20px;
+    display: flex;
+    justify-content: end;
 }

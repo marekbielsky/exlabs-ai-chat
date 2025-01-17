@@ -1,39 +1,17 @@
 import {useAuth} from '../../hooks/useAuth.tsx';
 import {useState} from 'react';
 import './login.css';
+import {useFetch} from "../../hooks/useFetch.ts";
 
 function Login() {
   const { login } = useAuth();
-
-  const companies = [
-    'Strelka',
-    'MOTO-MATE Ltd',
-    'Relay Technologies',
-    'Regno Cloud Limited',
-    'Yordex',
-    'clearBorder',
-    'Prevayl',
-    'Twyn Limited',
-    'New Motion Labs',
-    'Hit and Run Ltd',
-    'Swerve',
-    'evRiderz Ltd',
-    'Valerian',
-    'Just Move In',
-    'Omnium - Myparceldelivery.com Ltd',
-    'Shipergy Ltd',
-    'Lounges.tv Ltd',
-    'Ocushield',
-    'Infranomics'
-  ];
-
+  const { data } = useFetch<string[]>('auth/companies');
   const [company, setCompany] = useState('');
 
   async function handleLogin(e) {
     e.preventDefault();
     login(company);
   }
-
 
   return (
     <main className='login-container'>
@@ -43,12 +21,14 @@ function Login() {
         <div className='login-form'>
           <form onSubmit={handleLogin}>
             <h2>Sign in to Connectd</h2>
-            <div>
-              <select onChange={e => {setCompany(e.target.value);}}>
-                <option disabled selected>Select company*</option>
-                {companies.map((company) => (<option value={company} key={company}>{company}</option>))}
-              </select>
-            </div>
+            {data ? (
+              <div>
+                <select onChange={e => {setCompany(e.target.value);}}>
+                  <option disabled selected>Select company*</option>
+                  {data.map((company) => (<option value={company} key={company}>{company}</option>))}
+                </select>
+              </div>
+            ) : 'Loading...'}
             <button type="submit" className="btn btn-primary">Login</button>
           </form>
           <div className='login-footer'>

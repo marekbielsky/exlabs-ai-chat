@@ -25,4 +25,8 @@ export class UsersService {
   async findOneById(id: string): Promise<User | undefined> {
     return Promise.resolve(this.users.find((user) => user.id === id));
   }
+
+  async getCompanies(): Promise<string[]> {
+    return Promise.resolve(this.users.map((user) => user.businessName));
+  }
 }
