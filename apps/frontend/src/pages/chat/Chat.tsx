@@ -1,22 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import {Link, useParams, useSearchParams} from 'react-router';
+import { Link, useParams, useSearchParams } from 'react-router';
 import Avatar from '../../components/parts/Avatar.tsx';
 import { useAuth } from '../../hooks/useAuth.tsx';
 import { useSocket } from '../../hooks/useSocket.ts';
 import './Chat.css';
-import SectionsView from "./components/SectionsView.tsx";
-
-
-const sectionsMapping = {
-  summary: null,
-  revenue: 'Revenue',
-  customer: 'Customer',
-  churn: 'Churn',
-  profitAndBurn: 'Profit & Burn',
-  pipeline: 'Pipeline',
-  productDevelopment: 'Product Development',
-  unitEconomics: 'Unit Economics',
-};
+import SectionsView from './components/SectionsView.tsx';
 
 function Chat() {
   const { chatId } = useParams();
@@ -129,10 +117,16 @@ function Chat() {
             </div>
           </div>
           <div className="report-content">
-            <div className="report-scroller" >
+            <div className="report-scroller">
               <h1>{report.title}</h1>
               <div>{report.overview}</div>
-              {report.sections && <SectionsView sections={report.sections} highlightedRef={highlightedRef} currentlyHighlightedSection={report.currentlyHighlightedSection}/>}
+              {report.sections && (
+                <SectionsView
+                  sections={report.sections}
+                  highlightedRef={highlightedRef}
+                  currentlyHighlightedSection={report.currentlyHighlightedSection}
+                />
+              )}
               <p>{report.closing}</p>
               {report.signature && (
                 <div className="signature">
@@ -144,7 +138,7 @@ function Chat() {
           </div>
         </div>
       </div>
-      <div className='chat-footer'>
+      <div className="chat-footer">
         <Link to={`/chat/${chatId}/final`}>
           <button disabled={isGenerating}>Finalize</button>
         </Link>
