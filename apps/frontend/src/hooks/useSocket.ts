@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useState } from 'react';
-import { io, Socket } from 'socket.io-client';
+import { io } from 'socket.io-client';
 import { useAuth } from './useAuth.tsx';
 import { Lexer } from 'streaming-json';
 
@@ -13,7 +13,7 @@ type MetricSection = {
   table: Table;
 };
 
-type Report = {
+export type Report = {
   title?: string | null;
   greeting?: string | null;
   overview?: string | null;

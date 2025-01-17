@@ -21,11 +21,7 @@ interface SocketWithUserData extends Socket {
   endDate: Date;
 }
 
-@WebSocketGateway({
-  cors: {
-    origin: 'http://localhost:5173',
-  },
-})
+@WebSocketGateway({ cors: { origin: 'http://localhost:5173' } })
 export class ChatGateway implements OnGatewayConnection {
   private readonly logger = new Logger(ChatGateway.name);
 
@@ -37,7 +33,7 @@ export class ChatGateway implements OnGatewayConnection {
   ) {}
 
   @WebSocketServer()
-  server: Server;
+    server: Server;
 
   @SubscribeMessage('message')
   async handleMessage(
@@ -88,9 +84,11 @@ export class ChatGateway implements OnGatewayConnection {
       }
 
       const payload = await this.jwtService.verifyAsync<JwtTokenPayload>(token);
+
       this.logger.log(`Token verified: ${payload.name}`);
 
       const user = await this.usersService.findOneByName(payload.name);
+
       this.logger.log(`User found: ${user.businessName} (${user.id})`);
 
       if (!user) {

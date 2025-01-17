@@ -9,6 +9,7 @@ import Login from './pages/auth/Login.tsx';
 import ProtectedLayout from './pages/auth/ProtectedLayout.tsx';
 import { AuthProvider } from './hooks/useAuth.tsx';
 import Config from "./pages/chat/Config.tsx";
+import Final from "./pages/chat/Final.tsx";
 
 createRoot(document.getElementById('root')!).render(
   <BrowserRouter>
@@ -21,6 +22,7 @@ createRoot(document.getElementById('root')!).render(
             <Route index element={<Start />} />
             <Route path="config" element={<Config />} />
             <Route path=":chatId" element={<Chat />} />
+            <Route path=":chatId/final" element={<Final />} />
           </Route>
         </Route>
       </Routes>

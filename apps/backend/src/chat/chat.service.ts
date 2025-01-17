@@ -13,10 +13,12 @@ interface ChatHistory {
   endDate: Date;
 }
 
+const model: OpenAI.Chat.ChatModel = 'gpt-4o';
+
 @Injectable()
 export class ChatService {
   private openai: OpenAI;
-  private users: {
+  private readonly users: {
     [userId: string]: {
       chats: {
         [chatId: string]: ChatHistory;
@@ -30,9 +32,7 @@ export class ChatService {
     private readonly usersService: UsersService,
   ) {
     this.logger.log('Initializing ChatService...');
-    this.openai = new OpenAI({
-      apiKey: this.configService.get<string>('OPENAI_API_KEY'),
-    });
+    this.openai = new OpenAI({ apiKey: this.configService.get<string>('OPENAI_API_KEY') });
     this.users = {};
     this.logger.log('ChatService initialized successfully.');
   }
@@ -71,7 +71,7 @@ export class ChatService {
     const chunks = [];
 
     const stream = await this.openai.chat.completions.create({
-      model: 'gpt-4o',
+      model,
       messages: this.users[user.id].chats[chatId].messages,
       stream: true,
       response_format: zodResponseFormat(responseSchema, 'response_schema'),
@@ -107,7 +107,7 @@ export class ChatService {
     const chunks = [];
 
     const stream = await this.openai.chat.completions.create({
-      model: 'gpt-4o',
+      model,
       messages: this.users[user.id].chats[chatId].messages,
       stream: true,
       response_format: zodResponseFormat(responseSchema, 'response_schema'),
@@ -126,5 +126,44 @@ export class ChatService {
       role: 'assistant',
       content: chunks.join(''),
     });
+  }
+
+  public getReport(userId: string, chatId: string): { report: string, startDate: Date, endDate: Date } | null {
+    const user = this.users[userId];
+
+    if (!user) {
+      return null;
+    }
+    const chat = user.chats[chatId];
+
+    if (!chat) {
+      return null;
+    }
+
+    const assistantMessages = chat.messages.filter(m => m.role === 'assistant');
+    const sectionsData =  assistantMessages.map(m => JSON.parse(m.content as string).report.sections);
+
+    const report = sectionsData.slice(1).reduce((acc, curr) => {
+      if (curr.overview) {
+        acc.overview = curr.overview;
+      }
+
+      Object.keys(curr).filter(key => key !== 'overview').forEach(key => {
+        if (curr[key]?.description) {
+          acc[key].description = curr[key].description;
+        }
+        if (curr[key]?.table) {
+          acc[key].table = curr[key].table;
+        }
+      });
+
+      return acc;
+    }, sectionsData[0]);
+
+    return {
+      report: JSON.stringify(report),
+      startDate: chat.startDate,
+      endDate: chat.endDate,
+    };
   }
 }
