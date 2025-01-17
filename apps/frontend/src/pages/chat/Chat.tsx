@@ -6,7 +6,7 @@ import { useSocket } from '../../hooks/useSocket.ts';
 import './Chat.css';
 
 const sectionsMapping = {
-  overview: null,
+  summary: null,
   revenue: 'Revenue',
   customer: 'Customer',
   churn: 'Churn',

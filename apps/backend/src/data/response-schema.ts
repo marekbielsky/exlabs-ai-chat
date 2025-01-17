@@ -14,9 +14,7 @@ const tableSchema = z
 const sectionWithTableSchema = (description: string) =>
   z
     .object({
-      description: nullableString.describe(
-        description + ' Map all null values to dash "-"',
-      ),
+      description: nullableString.describe(description),
       table: tableSchema,
     })
     .nullable();
