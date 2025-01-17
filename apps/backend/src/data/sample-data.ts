@@ -1,7 +1,7 @@
 export const metrics = `
 Month,Total Revenue,Annual Recurring Revenue (ARR),Number of Customers,Average Order Value (AOV),Net Revenue Retention,Churn Rate,Gross Profit Margin,Monthly Gross Burn,Monthly Net Burn,Working Capital,Cash Runway,Pipeline Value,Average Deal Value,Pipeline Volume,Customer Acquisition Cost (CAC),Customer Life Time Value (LTV),LTV:CAC Ratio
 January 2024,null,33.6,85.2,0.082,1.15,null,0.75,1.2,0.8,5.2,18.5,null,null,null,0.044,0.95,21.6
-February 2024,10.5,null,86.5,0.084,1.16,0.030,0.76,1.1,0.7,5.4,19.2,null,null,null,29,0.043,0.97,null
+February 2024,10.5,null,86.5,0.084,1.16,0.030,0.76,1.1,0.7,5.4,19.2,null,null,null,0.043,0.97,22.6
 March 2024,10.8,36.0,null,0.086,1.17,0.029,0.77,1.0,0.6,5.6,20.0,null,null,null,0.042,0.99,23.6
 April 2024,11.1,37.2,89.1,0.088,1.18,0.028,0.78,0.9,0.5,5.8,20.8,null,null,null,0.041,1.01,24.6
 May 2024,null,38.4,90.4,0.090,null,0.027,0.79,0.8,0.4,6.0,21.6,null,null,null,0.040,1.03,25.8
